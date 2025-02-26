@@ -12,6 +12,7 @@ namespace infini
         // 'alignment' defaults to sizeof(uint64_t), because it is the length of
         // the longest data type currently supported by the DataType field of
         // the tensor
+        // uint64_t: 8字节无符号整数
         alignment = sizeof(uint64_t);
     }
 
