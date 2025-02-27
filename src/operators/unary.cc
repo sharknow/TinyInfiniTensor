@@ -39,7 +39,20 @@ namespace infini
         // TODO：返回经过 clip 操作后的 shape
         // REF: https://onnx.ai/onnx/operators/onnx__Clip.html#clip-13
         // =================================== 作业 ===================================
-        return std::nullopt;
+        vector<Shape> shapes;
+        int min_value = getMin().has_value() ? (static_cast<int>(getMin().value())) : std::numeric_limits<int>::lowest();
+        int max_value = getMax().has_value() ? (static_cast<int>(getMax().value())) : std::numeric_limits<int>::max();
+        for (auto &tensor : inputs) {
+            auto shape = tensor->getDims();
+            Shape cliped_shape;
+            for (auto shape_elem : shape) {
+                auto cliped_elem = std::min(max_value, std::max(shape_elem, min_value));
+                cliped_shape.emplace_back(cliped_elem);
+            }
+            shapes.emplace_back(cliped_shape);
+
+        }
+        return shapes;
     }
 
     std::string ClipObj::toString() const
