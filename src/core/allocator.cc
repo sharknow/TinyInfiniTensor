@@ -34,12 +34,14 @@ namespace infini
         // TODO: 设计一个算法来分配内存，返回起始地址偏移量
         // =================================== 作业 ===================================
         size_t head_address_offset = 0;
+        size_t next_elem_head_offset = 0;
         std::cout << "****cur freeBlocks size = " << freeBlocks.size() << std::endl;
         if (freeBlocks.size() <= 1) {
             if (freeBlocks.empty()) {
                 std::cout << "*****************cur freeBlocks is empty" << std::endl;
                 freeBlocks[head_address_offset] = size;
                 std::cout << "****************in empty, offset = " << head_address_offset << " it's block size = " << size << std::endl;
+                peak = head_address_offset + size;
                 return head_address_offset;
             }
 
@@ -47,9 +49,10 @@ namespace infini
                 auto it = freeBlocks.begin();
                 auto block_size = it->second;
                 std::cout << "*******************cur size = " << size << " old offset = " << head_address_offset << std::endl;
-                head_address_offset += block_size;
+                head_address_offset = block_size;
                 std::cout << "**********new offset = " << head_address_offset << std::endl;
                 freeBlocks[head_address_offset] = size;
+                peak = head_address_offset + size;
                 return head_address_offset;
             }
         } else  {
@@ -59,16 +62,24 @@ namespace infini
                 auto left_offset = left->first;
                 auto left_block_size = left->second;
                 auto right_offset = right->first;
-                head_address_offset += (left_offset + left_block_size);
-                std::cout << "*********left offset = " << left_offset << " left_block_size = " << left_block_size << " right offset = " << right_offset << std::endl;
+                auto right_block_size = right->second;
+                // check gap...
+                head_address_offset = (left_offset + left_block_size);
+                std::cout << "*********left offset = " << left_offset << " left_block_size = " << left_block_size << " right offset = " << right_offset << " right block size = " << right_block_size << " pre alloc size = " << size << std::endl;
+                std::cout << "*********head_address_offset + size = " << head_address_offset + size << " right_offset = " << right_offset << std::endl;
                 if ((head_address_offset + size) <= right_offset) {
                     freeBlocks[head_address_offset] = size;
                     return head_address_offset;
                 }
+                // ...check gap
+                next_elem_head_offset = (right_offset + right_block_size);
+               std::cout << "in for next_elem_head_offset = " << next_elem_head_offset << std::endl;   
             }
-            freeBlocks[head_address_offset] = size;
+            std::cout << "next_elem_head_offset = " << next_elem_head_offset << std::endl;
+            freeBlocks[next_elem_head_offset] = size;
+            peak = next_elem_head_offset + size;
         }
-        return head_address_offset;
+        return next_elem_head_offset;
     }
 
     void Allocator::free(size_t addr, size_t size)
@@ -79,25 +90,16 @@ namespace infini
         // =================================== 作业 ===================================
         // TODO: 设计一个算法来回收内存
         // =================================== 作业 ===================================
-        std::cout << "***************freeBlocks size = " << freeBlocks.size() << " want free addr = " << addr << " want free size = " << size << std::endl;
-        std::cout << "map info: " << std::endl;
-        for (auto it = freeBlocks.begin(); it != freeBlocks.end(); ++it) {
-            std::cout << "offset = " << it->first << " block_size = " << it->second << std::endl;
-        }
         for (auto it = freeBlocks.begin(); it != freeBlocks.end(); ++it) {
             auto offset = it->first;
             std::cout << "****************free: cur offset = " << offset << " input addr = " << addr << std::endl;
             if (offset == addr) {
                 std::cout << "pre erase key = " << offset << std::endl;
                 freeBlocks.erase(offset);
+                peak -= it->second;
                 std::cout << "free done, new map size = " << freeBlocks.size() << std::endl;
                 break;
             }
-        }
-        std::cout << "free done, now map size = " << freeBlocks.size() << std::endl;
-        std::cout << "done free, map info: " << std::endl;
-        for (auto it = freeBlocks.begin(); it != freeBlocks.end(); ++it) {
-            std::cout << "offset = " << it->first << " block_size = " << it->second << std::endl;
         }
     }
 

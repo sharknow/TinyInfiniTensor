@@ -5,6 +5,7 @@
 
 namespace infini {
 TEST(Concat, ShapeInfer) {
+    std::cout << "start test concat" << std::endl;
     Runtime runtime = NativeCpuRuntimeObj::getInstance();
     Graph g = make_ref<GraphObj>(runtime);
     auto t1 = g->addTensor({1, 3, 2, 4}, DataType::Float32);
@@ -12,5 +13,6 @@ TEST(Concat, ShapeInfer) {
 
     auto op = g->addOp<ConcatObj>(TensorVec{t1, t2}, nullptr, 3);
     EXPECT_EQ(op->getOutput()->getDims(), (Shape{1, 3, 2, 9}));
+    std::cout << "end test concat" << std::endl;
 }
 } // namespace infini
