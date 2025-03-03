@@ -9,6 +9,7 @@ namespace infini {
 
     TEST(ElementWise, ShapeInference)
     {
+        std::cout << "start test ShapeInference" << std::endl;
         Runtime runtime = NativeCpuRuntimeObj::getInstance();
         {
             Graph g = make_ref<GraphObj>(runtime);
@@ -17,10 +18,12 @@ namespace infini {
             auto op = g->addOp<AddObj>(i0, i1, nullptr);
             EXPECT_EQ(op->getOutput()->getDims(), (Shape{2, 3, 3, 4}));
         }
+        std::cout << "end test ShapeInference" << std::endl;
     }
 
     TEST(ElementWise, Broadcasting)
     {
+        std::cout << "start test Broadcasting" << std::endl;
         Runtime runtime = NativeCpuRuntimeObj::getInstance();
         {
             Graph g = make_ref<GraphObj>(runtime);
@@ -61,6 +64,7 @@ namespace infini {
             auto op = g->addOp<AddObj>(i0, i1, nullptr);
             EXPECT_EQ(op->getOutput()->getDims(), (Shape{2, 3, 4, 5}));
         }
+        std::cout << "end test Broadcasting" << std::endl;
     }
 
 } // namespace infini

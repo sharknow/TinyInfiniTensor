@@ -9,8 +9,53 @@ Shape infer_broadcast(const Shape &A, const Shape &B) {
     // TODO：对 A 和 B 进行双向广播，返回广播后的形状。
     // REF: https://github.com/onnx/onnx/blob/main/docs/Broadcasting.md
     // =================================== 作业 ===================================
-    
-    return {};
+    // Same
+    if (A.size() == B.size()) {
+        size_t i = 0;
+        for (; i < A.size(); ++i) {
+            if (A[i] != B[i]) {
+                break;
+            }
+        }
+        if (i == (A.size() - 1)) {
+            return A;
+        }
+    }
+
+    // Different
+    size_t rank_A = A.size(), rank_B = B.size();
+    Shape new_shape;
+    Shape result_shape;
+    if (rank_A > rank_B) {
+        for (size_t i = 0; i < (rank_A - rank_B); ++i) {
+            new_shape.emplace_back(1);
+        }
+        for (size_t i = 0; i < rank_B; ++i) {
+            new_shape.emplace_back(B[i]);
+        }
+        // Now: rank_A == rank_B
+        for (size_t i = 0; i < new_shape.size(); ++i) {
+            result_shape.emplace_back(std::max(A[i] ,new_shape[i]));
+        }
+    } else if (rank_B > rank_A) {
+        for (size_t i = 0; i < (rank_B - rank_A); ++i) {
+            new_shape.emplace_back(1);
+        }
+        for (size_t i = 0; i < rank_A; ++i) {
+            new_shape.emplace_back(A[i]);
+        }
+        // Now: rank_A == rank_B
+        for (size_t i = 0; i < new_shape.size(); ++i) {
+            result_shape.emplace_back(std::max(B[i] ,new_shape[i]));
+        }
+    } else {
+        // Now: rank_A == rank_B
+        for (size_t i = 0; i < rank_A; ++i) {
+            result_shape.emplace_back(std::max(A[i] ,B[i]));
+        }
+    }
+
+    return result_shape;
 }
 
 int get_real_axis(const int &axis, const int &rank) {
