@@ -10,7 +10,8 @@ namespace infini
     using ExpectOutput = vector<float>;
 
     TEST(Matmul, ShapeInference)
-    {
+    {   
+        std::cout << "++++++++++++start test 1" << std::endl;
         auto runtime = NativeCpuRuntimeObj::getInstance();
         {
             Graph g = make_ref<GraphObj>(runtime);
@@ -20,6 +21,7 @@ namespace infini
             auto C = matmul->getOutputs()[0];
             EXPECT_EQ(C->getDims(), (Shape{1, 3, 2}));
         }
+        std::cout << "++++++++++++start test 2" << std::endl;
         {
             Graph g = make_ref<GraphObj>(runtime);
             auto A = g->addTensor(Shape{3, 5, 4});
@@ -28,6 +30,7 @@ namespace infini
             auto C = matmul->getOutputs()[0];
             EXPECT_EQ(C->getDims(), (Shape{3, 4, 2}));
         }
+        std::cout << "++++++++++++start test 3" << std::endl;
         {
             Graph g = make_ref<GraphObj>(runtime);
             auto A = g->addTensor(Shape{1, 2, 3, 5});
@@ -36,6 +39,7 @@ namespace infini
             auto C = matmul->getOutputs()[0];
             EXPECT_EQ(C->getDims(), (Shape{1, 2, 3, 2}));
         }
+        std::cout << "++++++++++++start test 4" << std::endl;
         {
             Graph g = make_ref<GraphObj>(runtime);
             auto A = g->addTensor(Shape{2, 3, 5, 4});
@@ -44,6 +48,7 @@ namespace infini
             auto C = matmul->getOutputs()[0];
             EXPECT_EQ(C->getDims(), (Shape{2, 3, 4, 2}));
         }
+        std::cout << "++++++++++++start test 5" << std::endl;
         {
             Graph g = make_ref<GraphObj>(runtime);
             auto A = g->addTensor(Shape{2, 3, 5, 4});
@@ -52,6 +57,7 @@ namespace infini
             auto C = matmul->getOutputs()[0];
             EXPECT_EQ(C->getDims(), (Shape{2, 3, 4, 2}));
         }
+        std::cout << "++++++++++++end test" << std::endl;
     }
 
 }; // namespace infini
