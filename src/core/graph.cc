@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <numeric>
 #include <queue>
+#include "operators/matmul.h"
 
 namespace infini
 {
@@ -106,6 +107,114 @@ namespace infini
         // 1. 去除冗余的算子（例如，两个相邻的算子都是 transpose 算子，且做的是相反的操作，可以将其全部删除）
         // 2. 合并算子（例如，矩阵乘算子中含有属性transA、transB，如果其输入存在transpose，且对最后两个维度做交换，就可以将transpose融入到矩阵乘算子的属性中去）
         // =================================== 作业 ===================================
+        auto last_op = ops[0];
+        vector<Operator> ops_pre_to_be_removed;
+
+        for (size_t i = 1; i < ops.size(); ++i) {
+            auto cur_op = ops[i];
+            if ((last_op->getOpType() == OpType::Transpose) && (cur_op->getOpType() == OpType::Transpose)) {
+                if (last_op->getOutput()->getGuid() == (cur_op->getInputs()[0])->getGuid()) {
+                    if ((last_op->getInputs()[0])->getDims() == cur_op->getOutput()->getDims()) {
+                        ops_pre_to_be_removed.emplace_back(cur_op);
+                        auto last_op_input_tensor = last_op->getInputs()[0];
+                        auto cur_op_output_tensor = cur_op->getOutput();
+                        removeOperator(last_op);
+                        removeOperator(cur_op);
+                        removeTensor(last_op->getOutput());
+                        for (auto &op : ops) {
+                            if ((op->getInputs()[0])->getGuid() == cur_op_output_tensor->getGuid()) {
+                                op->replaceInput(cur_op_output_tensor, last_op_input_tensor);
+                                last_op_input_tensor->removeTarget(last_op);
+                                removeTensor(cur_op_output_tensor);
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            last_op = cur_op;
+        }
+
+        Tensor new_tensor_A, new_tensor_B, output_tensor_C;
+        bool trans_A = false, trans_B = false;
+        for (auto &op : ops) {
+            if (op->getOpType() == OpType::MatMul) {
+                auto input_tensor_A = op->getInputs()[0];
+                auto input_tensor_B = op->getInputs()[1];
+                output_tensor_C = op->getOutput();
+
+                // Find transpose output tensor_A
+                new_tensor_A = input_tensor_A;
+                new_tensor_B = input_tensor_B;
+                for (auto op_elem : ops) {
+                    if (op_elem->getOpType() == OpType::Transpose) {
+                        if (op_elem->getOutput()->getGuid() == input_tensor_A->getGuid()) {
+                            std::cout << "get new_tensor_A" << std::endl;
+                            new_tensor_A = op_elem->getInputs()[0];
+                            trans_A = true;
+                            op->replaceInput(input_tensor_A, new_tensor_A);
+                            new_tensor_A->removeTarget(op_elem);
+                        }
+                        if (op_elem->getOutput()->getGuid() == input_tensor_B->getGuid()) {
+                            new_tensor_B = op_elem->getInputs()[0];
+                            std::cout << "get new_tensor_B new Guid = " << new_tensor_B->getGuid() << std::endl;
+                            trans_B = true;
+                            op->replaceInput(input_tensor_B, new_tensor_B);
+                            new_tensor_B->removeTarget(op_elem);
+                        }
+                        ops_pre_to_be_removed.emplace_back(op_elem);
+                        std::cout << "0 now ops size = " << ops.size() << std::endl;
+                        removeOperator(op_elem);
+                        std::cout << "1 now ops size = " << ops.size() << std::endl;
+                        removeTensor(op_elem->getOutput());
+                        std::cout << "2 now ops tensor size = " << getTensors().size() << std::endl;
+                        break;
+                    }
+                    std::cout << "3 now ops size = " << ops.size() << std::endl;
+                }
+                // method: 1
+                std::cout << "start remove MatMul op" << std::endl;
+                // removeOperator(op);
+                std::cout << "4 now ops size = " << ops.size() << std::endl;
+                std::cout << "start add new MatMul op, transA = " << trans_A << " transB = " << trans_B << std::endl;
+                break;
+            }
+        }
+
+        for (auto &op : ops) {
+            if (op->getOpType() == OpType::MatMul) {
+                auto op_pred = op->getPredecessors();
+                std::cout << "0 op_pred size = " << op_pred.size() << std::endl;
+                for (auto &elem : ops_pre_to_be_removed) {
+                    op->removePredecessors(elem);
+                }
+                std::cout << "1 op_pred size = " << op_pred.size() << std::endl;
+                auto matmul_op = as<MatmulObj>(op);
+                if (trans_A) {
+                    matmul_op->setTransA(true);
+                }
+                if (trans_B) {
+                    matmul_op->setTransB(true);
+                }
+                break;
+            }
+        }
+
+        for (auto &op : ops) {
+            for (auto &input : op->getInputs()) {
+                if (input) {
+                    input->addTarget(op);
+                    input->setSource(nullptr);
+                }
+            }
+
+            for (auto &output : op->getOutputs()) {
+                if (output) {
+                    output->setSource(op);
+                }
+            }
+        }
     }
 
     Tensor GraphObj::getTensor(int fuid) const
